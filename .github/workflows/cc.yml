@@ -1,0 +1,42 @@
+name: Build and Push Docker image
+
+# 这里定义了触发条件，指定只有在 main 分支上的 push 事件时，才执行以下步骤。
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  # 定义了一个名为 build-and-push 的作业。
+  build-and-push:
+    # 指定运行作业的虚拟机环境为最新的 Ubuntu。
+    runs-on: ubuntu-latest
+
+    steps:
+      # 第一步：检出代码，使用 actions/checkout@v2 这个 GitHub Action 来拉取最新的代码。
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      # 第二步：登录 Docker Hub，这一步需要在 GitHub Secrets 中设置 DOCKER_USERNAME 和 DOCKER_PASSWORD。
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      # 第三步：构建 Docker 镜像，此步骤中的 '.' 表示 Dockerfile 位于项目的根目录。
+      # 镜像标签为 docker_username/repository_name:tag_name，其中 tag_name 通常为版本号或 latest。
+      - name: Build Docker image
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          push: true
+          tags: ${{ secrets.DOCKER_USERNAME }}/override:latest
+
+
+      # 第四步：推送镜像到 Docker Hub，使用的是上一步构建的镜像标签。
+      - name: Push Docker image
+        uses: docker/build-push-action@v2
+        with:
+          push: true
+          tags: ${{ secrets.DOCKER_USERNAME }}/override:latest
